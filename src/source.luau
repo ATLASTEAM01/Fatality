@@ -1202,22 +1202,25 @@ function Fatality:NewInput(Frame : Frame , Callback : () -> ()) : TextButton
 end;
 
 function Fatality:Drag(InputFrame: Frame, MoveFrame: Frame, Speed : number)
-	local dragToggle: boolean = false;
-	local dragStart: Vector3 = nil;
-	local startPos: UDim2 = nil;
+	local dragToggle: boolean = false
+	local dragStart: Vector3 = nil
+	local startPos: UDim2 = nil
+	local dragController = {}
+	dragController.isLocked = false
 
 	local function updateInput(input)
-		local delta = input.Position - dragStart;
+		if dragController.isLocked then return end
+		local delta = input.Position - dragStart
 		local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-			startPos.Y.Scale, startPos.Y.Offset + delta.Y);
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 
-		Fatality:CreateAnimation(MoveFrame,Speed,nil,{
+		Fatality:CreateAnimation(MoveFrame, Speed, nil, {
 			Position = position
-		});
-	end;
+		})
+	end
 
 	InputFrame.InputBegan:Connect(function(input)
-		if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and #Fatality.DragBlacklist <= 0 then 
+		if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and #Fatality.DragBlacklist <= 0 then
 			dragToggle = true
 			dragStart = input.Position
 			startPos = MoveFrame.Position
@@ -1230,7 +1233,7 @@ function Fatality:Drag(InputFrame: Frame, MoveFrame: Frame, Speed : number)
 	end)
 
 	UserInputService.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch and #Fatality.DragBlacklist <= 0 then
+		if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and #Fatality.DragBlacklist <= 0 then
 			if dragToggle then
 				updateInput(input)
 			end
@@ -1239,8 +1242,15 @@ function Fatality:Drag(InputFrame: Frame, MoveFrame: Frame, Speed : number)
 				dragToggle = false
 			end
 		end
-	end);
-end;
+	end)
+
+	function dragController:SetLocked(locked)
+		dragController.isLocked = locked
+	end
+
+	return dragController
+end
+
 
 function Fatality:ScrollSignal(Scroll: ScrollingFrame,UIListLayout: UIListLayout,Type:string)
 	if Type == 'X' then
@@ -4182,7 +4192,7 @@ function Fatality.new(Window: Window)
 	local InfoButton = Instance.new("ImageButton")
 	local SearchButton = Instance.new("ImageButton")
 	local SaveButton = Instance.new("ImageButton")
-
+    
 	Fatality.WindowFlags[Fatalitywin] = {};
 
 	Fatality:ScrollSignal(tbc,UIListLayout,'X');
@@ -4617,15 +4627,96 @@ function Fatality.new(Window: Window)
 	UICorner_6.CornerRadius = UDim.new(0, 5)
 	UICorner_6.Parent = HeaderLineShadow_2
 
-	Fatality:Drag(FatalFrame,FatalFrame,0.1);
+	-- 获取拖拽控制器
+	local dragController = Fatality:Drag(FatalFrame, FatalFrame, 0.1)
+
+	-- [[ 新增的UI控件 ]] --
+	local ControlButtonsFrame = Instance.new("Frame")
+	ControlButtonsFrame.Name = "ControlButtons"
+	ControlButtonsFrame.Parent = Fatalitywin
+	ControlButtonsFrame.BackgroundTransparency = 1
+	ControlButtonsFrame.Position = UDim2.new(0, 20, 0, 20) -- 放置在左上角
+	ControlButtonsFrame.Size = UDim2.new(0, 50, 0, 100)
+	ControlButtonsFrame.ZIndex = 1000
+
+	local controlsLayout = Instance.new("UIListLayout")
+	controlsLayout.Parent = ControlButtonsFrame
+	controlsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	controlsLayout.Padding = UDim.new(0, 5)
+
+	-- 创建展开/关闭按钮 (毛玻璃效果)
+	local ToggleButton = Instance.new("TextButton")
+	ToggleButton.Name = "ToggleButton"
+	ToggleButton.Parent = ControlButtonsFrame
+	ToggleButton.Size = UDim2.new(0, 50, 0, 45)
+	ToggleButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+	ToggleButton.BackgroundTransparency = 0.7 -- 毛玻璃透明度
+	ToggleButton.Text = "Menu"
+	ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+	ToggleButton.Font = Enum.Font.SourceSansBold
+	ToggleButton.TextSize = 14
+
+	local toggleStroke = Instance.new("UIStroke")
+	toggleStroke.Parent = ToggleButton
+	toggleStroke.Color = Color3.fromRGB(255, 255, 255)
+	toggleStroke.Thickness = 1
+	toggleStroke.Transparency = 0.5
+
+	local toggleCorner = Instance.new("UICorner")
+	toggleCorner.CornerRadius = UDim.new(0, 8)
+	toggleCorner.Parent = ToggleButton
+
+	-- 创建锁定按钮
+	local LockButton = Instance.new("TextButton")
+	LockButton.Name = "LockButton"
+	LockButton.Parent = ControlButtonsFrame
+	LockButton.Size = UDim2.new(0, 50, 0, 45)
+	LockButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+	LockButton.BackgroundTransparency = 0.7 -- 毛玻璃透明度
+	LockButton.Text = "Lock"
+	LockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+	LockButton.Font = Enum.Font.SourceSansBold
+	LockButton.TextSize = 14
+
+	local lockStroke = Instance.new("UIStroke")
+	lockStroke.Parent = LockButton
+	lockStroke.Color = Color3.fromRGB(255, 255, 255)
+	lockStroke.Thickness = 1
+	lockStroke.Transparency = 0.5
+
+	local lockCorner = Instance.new("UICorner")
+	lockCorner.CornerRadius = UDim.new(0, 8)
+	lockCorner.Parent = LockButton
+
+	-- 按钮逻辑
+	ToggleButton.MouseButton1Click:Connect(function()
+		Fatal.Toggle = not Fatal.Toggle
+		ToggleUI(Fatal.Toggle)
+	end)
+
+	local isLocked = false
+	LockButton.MouseButton1Click:Connect(function()
+		isLocked = not isLocked
+		dragController:SetLocked(isLocked)
+		if isLocked then
+			LockButton.Text = "Unlock"
+			LockButton.BackgroundColor3 = Fatality.Colors.Main -- 锁定状态用主题色高亮
+			LockButton.BackgroundTransparency = 0.5
+		else
+			LockButton.Text = "Lock"
+			LockButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80) -- 恢复默认颜色
+			LockButton.BackgroundTransparency = 0.7
+		end
+	end)
+	-- [[ 新增UI控件结束 ]] --
 
 	UserInputService.InputBegan:Connect(function(input,istyping)
 		if not istyping then
-			if input.KeyCode == Window.Keybind or input.KeyCode.Name == Window.Keybind then
-				Fatal.Toggle = not Fatal.Toggle;
-
-				ToggleUI(Fatal.Toggle);
-			end;
+			-- 移除键盘快捷键，仅使用按钮控制
+			-- if input.KeyCode == Window.Keybind or input.KeyCode.Name == Window.Keybind then
+			-- 	Fatal.Toggle = not Fatal.Toggle;
+			-- 	ToggleUI(Fatal.Toggle);
+			-- end;
 		end
 	end)
 
