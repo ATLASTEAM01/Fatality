@@ -4633,77 +4633,159 @@ function Fatality.new(Window: Window)
 	-- 获取拖拽控制器
 	local dragController = Fatality:Drag(FatalFrame, FatalFrame, 0.1)
 
--- [[ 新增的UI控件 (已修复样式与逻辑) ]] --
-	local ControlButtonsFrame = Instance.new("Frame")
-	ControlButtonsFrame.Name = "ControlButtons"
-	ControlButtonsFrame.Parent = Fatalitywin
-	ControlButtonsFrame.BackgroundTransparency = 1
-	-- [修复] 位置在左侧轴 (0)，上下轴60% (0.6) 的位置
-	ControlButtonsFrame.Position = UDim2.new(0, 20, 0.6, 0) 
-	ControlButtonsFrame.Size = UDim2.new(0, 100, 0, 80) -- 容器大小
-	ControlButtonsFrame.ZIndex = 1000
 
-	local controlsLayout = Instance.new("UIListLayout")
-	controlsLayout.Parent = ControlButtonsFrame
-	controlsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	controlsLayout.Padding = UDim.new(0, 10) -- 按钮间距
+	local ResizeHandle = Instance.new("ImageButton")
+	ResizeHandle.Name = "ResizeHandle"
+	ResizeHandle.Parent = FatalFrame
+	ResizeHandle.AnchorPoint = Vector2.new(1, 1)
+	ResizeHandle.Position = UDim2.new(1, -2, 1, -2)
+	ResizeHandle.Size = UDim2.new(0, 16, 0, 16)
+	ResizeHandle.BackgroundTransparency = 1
+	ResizeHandle.Image = "rbxassetid://10734942072" -- Lucide 'scaling' icon or diagonal arrow
+	ResizeHandle.ImageColor3 = Color3.fromRGB(150, 150, 150)
+	ResizeHandle.ImageTransparency = 0.5
+	ResizeHandle.ZIndex = 20
 
-	-- [新增] 让控制按钮区域可拖拽
-	Fatality:AddDragBlacklist(ControlButtonsFrame) -- 防止与内部点击冲突
-	Fatality:Drag(ControlButtonsFrame, ControlButtonsFrame, 0)
+	local isResizing = false
+	local resizeStartPos = Vector2.new()
+	local initialSize = Vector2.new()
 
-	-- 通用按钮样式函数
-	local function createStyledButton(name, text)
-		local btn = Instance.new("TextButton")
-		btn.Name = name
-		btn.Parent = ControlButtonsFrame
-		btn.Size = UDim2.new(0, 80, 0, 30) -- [修复] 长方形尺寸
-		btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50) -- [修复] 灰色背景
-		btn.BackgroundTransparency = 0
-		btn.Text = text
-		btn.TextColor3 = Color3.fromRGB(220, 220, 220)
-		btn.Font = Enum.Font.GothamBold
-		btn.TextSize = 12
-		
-		-- [修复] 边框 (UIStroke)
-		local stroke = Instance.new("UIStroke")
-		stroke.Parent = btn
-		stroke.Color = Color3.fromRGB(0, 0, 0) -- 黑色边框
-		stroke.Thickness = 1.5
-		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	ResizeHandle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			isResizing = true
+			resizeStartPos = input.Position
+			initialSize = FatalFrame.AbsoluteSize
+			
+			-- 视觉反馈
+			Fatality:CreateAnimation(ResizeHandle, 0.2, {ImageColor3 = Fatality.Colors.Main, ImageTransparency = 0})
+		end
+	end)
 
-		-- [修复] 略微圆角或直角 (这里设为2像素微圆角)
-		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(0, 2) 
-		corner.Parent = btn
-		
-		return btn
-	end
+	UserInputService.InputChanged:Connect(function(input)
+		if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - resizeStartPos
+			local newX = math.max(400, initialSize.X + delta.X) -- 最小宽度限制
+			local newY = math.max(300, initialSize.Y + delta.Y) -- 最小高度限制
+			
+			FatalFrame.Size = UDim2.new(0, newX, 0, newY)
+		end
+	end)
 
-	local ToggleButton = createStyledButton("ToggleButton", "Menu")
-	local LockButton = createStyledButton("LockButton", "Lock UI")
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			if isResizing then
+				isResizing = false
+				-- 恢复视觉
+				Fatality:CreateAnimation(ResizeHandle, 0.2, {ImageColor3 = Color3.fromRGB(150, 150, 150), ImageTransparency = 0.5})
+			end
+		end
+	end)
 
-	-- 按钮逻辑
-	ToggleButton.MouseButton1Click:Connect(function()
+
+local BackpackButton = Instance.new("ImageButton")
+	local BackpackCorner = Instance.new("UICorner")
+	local BackpackRow = Instance.new("Frame")
+	local BackpackList = Instance.new("UIListLayout")
+	local BackpackLabel = Instance.new("TextLabel")
+	local BackpackPadding = Instance.new("UIPadding")
+	local BackpackIconHost = Instance.new("Frame")
+	local IconCenter = Instance.new("Frame")
+	local IconLayout = Instance.new("UIListLayout")
+	local MainIcon = Instance.new("ImageLabel")
+
+	-- 主按钮容器
+	BackpackButton.Name = "FatalityToggle"
+	BackpackButton.Parent = Fatalitywin
+	BackpackButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- 深色背景
+	BackpackButton.BackgroundTransparency = 0.1
+	BackpackButton.Position = UDim2.new(0, 20, 0, 20) -- 左上角位置
+	BackpackButton.Size = UDim2.new(0, 180, 0, 50)
+	BackpackButton.AutoButtonColor = false
+	BackpackButton.ClipsDescendants = true
+	BackpackButton.ZIndex = 200
+
+	-- 拖拽支持
+	Fatality:AddDragBlacklist(BackpackButton)
+	Fatality:Drag(BackpackButton, BackpackButton, 0.05)
+
+	-- 圆角
+	BackpackCorner.CornerRadius = UDim.new(0, 8)
+	BackpackCorner.Parent = BackpackButton
+
+	-- 边框 (可选，增强质感)
+	local BackpackStroke = Instance.new("UIStroke")
+	BackpackStroke.Parent = BackpackButton
+	BackpackStroke.Color = Color3.fromRGB(40, 40, 40)
+	BackpackStroke.Thickness = 1.5
+	BackpackStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+	-- 布局容器
+	BackpackRow.Name = "RowLabel"
+	BackpackRow.Parent = BackpackButton
+	BackpackRow.BackgroundTransparency = 1.000
+	BackpackRow.Size = UDim2.new(1, 0, 1, 0)
+
+	BackpackList.Parent = BackpackRow
+	BackpackList.FillDirection = Enum.FillDirection.Horizontal
+	BackpackList.VerticalAlignment = Enum.VerticalAlignment.Center
+	BackpackList.Padding = UDim.new(0, 8)
+	BackpackList.SortOrder = Enum.SortOrder.LayoutOrder
+
+	-- 图标容器 (左侧)
+	BackpackIconHost.Name = "IconHost"
+	BackpackIconHost.Parent = BackpackRow
+	BackpackIconHost.BackgroundTransparency = 1.000
+	BackpackIconHost.Size = UDim2.new(0, 40, 0, 40)
+	BackpackIconHost.LayoutOrder = 1
+
+	IconCenter.Name = "IconCenter"
+	IconCenter.Parent = BackpackIconHost
+	IconCenter.BackgroundTransparency = 1.000
+	IconCenter.Size = UDim2.new(1, 0, 1, 0)
+
+	IconLayout.Parent = IconCenter
+	IconLayout.FillDirection = Enum.FillDirection.Horizontal
+	IconLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	IconLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+	MainIcon.Name = "MainIcon"
+	MainIcon.Parent = IconCenter
+	MainIcon.BackgroundTransparency = 1.000
+	MainIcon.Size = UDim2.new(0, 24, 0, 24)
+	MainIcon.Image = "rbxassetid://10734950309" -- Settings icon / Fatality icon
+	MainIcon.ImageColor3 = Fatality.Colors.Main
+
+	-- 标题文本 (右侧)
+	BackpackLabel.Name = "Title"
+	BackpackLabel.Parent = BackpackRow
+	BackpackLabel.BackgroundTransparency = 1.000
+	BackpackLabel.Size = UDim2.new(1, -50, 1, 0)
+	BackpackLabel.FontFace = Fatality.FontSemiBold
+	BackpackLabel.Text = Window.Name or "FATALITY"
+	BackpackLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
+	BackpackLabel.TextSize = 16.000
+	BackpackLabel.TextXAlignment = Enum.TextXAlignment.Left
+	BackpackLabel.LayoutOrder = 2
+
+	BackpackPadding.Parent = BackpackRow
+	BackpackPadding.PaddingLeft = UDim.new(0, 8)
+	BackpackPadding.PaddingRight = UDim.new(0, 8)
+
+	-- 交互逻辑
+	BackpackButton.MouseEnter:Connect(function()
+		Fatality:CreateAnimation(BackpackStroke, 0.3, {Color = Fatality.Colors.Main})
+		Fatality:CreateAnimation(BackpackButton, 0.3, {BackgroundColor3 = Color3.fromRGB(25, 25, 25)})
+	end)
+
+	BackpackButton.MouseLeave:Connect(function()
+		Fatality:CreateAnimation(BackpackStroke, 0.3, {Color = Color3.fromRGB(40, 40, 40)})
+		Fatality:CreateAnimation(BackpackButton, 0.3, {BackgroundColor3 = Color3.fromRGB(15, 15, 15)})
+	end)
+
+	BackpackButton.MouseButton1Click:Connect(function()
 		Fatal.Toggle = not Fatal.Toggle
 		ToggleUI(Fatal.Toggle)
 	end)
-
-	local isLocked = false
-	LockButton.MouseButton1Click:Connect(function()
-		isLocked = not isLocked
-		dragController:SetLocked(isLocked)
-		if isLocked then
-			LockButton.Text = "Unlock UI"
-			LockButton.TextColor3 = Fatality.Colors.Main -- 锁定状态文字变色
-			LockButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-		else
-			LockButton.Text = "Lock UI"
-			LockButton.TextColor3 = Color3.fromRGB(220, 220, 220)
-			LockButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-		end
-	end)
-	-- [[ 新增UI控件结束 ]] --
 	
 	UserInputService.InputBegan:Connect(function(input,istyping)
 		if not istyping then
