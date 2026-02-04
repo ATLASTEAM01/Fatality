@@ -6258,7 +6258,7 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 		end)
 	end;
 
--- [ 自动创建控制按钮 - 放在 return Fatal 之前 ]
+-- [ 自动创建控制按钮 - 独立拖拽优化版 ]
 	do
 		local BackpackButton = Instance.new("ImageButton")
 		local BackpackCorner = Instance.new("UICorner")
@@ -6271,43 +6271,38 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 		local MainIcon = Instance.new("ImageLabel")
 
 		-- 设置主容器
-		BackpackButton.Name = "FatalityToggleAuto"
-		BackpackButton.Parent = Fatalitywin -- 确保显示在屏幕上
-		BackpackButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-		BackpackButton.BackgroundTransparency = 0 -- 解决蒙层阴影问题
+		BackpackButton.Name = "FatalityToggleFix"
+		BackpackButton.Parent = Fatalitywin 
+		BackpackButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25) -- 稍微调亮一点
+		BackpackButton.BackgroundTransparency = 0 
 		BackpackButton.BorderSizePixel = 0
-		BackpackButton.Position = UDim2.new(0, 20, 0, 20)
-		BackpackButton.Size = UDim2.new(0, 80, 0, 32) -- 缩小后的尺寸
+		-- [修改] 位置向下移动 100 像素 (原 20 -> 120)
+		BackpackButton.Position = UDim2.new(0, 20, 0, 120) 
+		BackpackButton.Size = UDim2.new(0, 80, 0, 32) 
 		BackpackButton.AutoButtonColor = false
 		BackpackButton.ClipsDescendants = true
 		BackpackButton.ZIndex = 200
+		BackpackButton.Active = true -- 必须为 True 才能响应拖拽
 
-		-- 圆角设置
-		BackpackCorner.CornerRadius = UDim.new(0, 6) -- 在这里修改圆角数值
+		-- 圆角和边框
+		BackpackCorner.CornerRadius = UDim.new(0, 6)
 		BackpackCorner.Parent = BackpackButton
-
-		-- 边框设置
 		BackpackStroke.Parent = BackpackButton
-		BackpackStroke.Color = Color3.fromRGB(50, 50, 50)
+		BackpackStroke.Color = Color3.fromRGB(60, 60, 60)
 		BackpackStroke.Thickness = 1.2
 		BackpackStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-		-- 拖拽优化 (0延迟跟手)
-		Fatality:AddDragBlacklist(BackpackButton)
-		Fatality:Drag(BackpackButton, BackpackButton, 0) 
-
-		-- 内部布局 (禁止 Active 以防干扰拖拽)
+		-- 内部布局 (禁止子元素 Active，确保点击穿透到父级按钮)
 		BackpackRow.Name = "RowLabel"
 		BackpackRow.Parent = BackpackButton
 		BackpackRow.BackgroundTransparency = 1
 		BackpackRow.Size = UDim2.new(1, 0, 1, 0)
-		BackpackRow.Active = false
+		BackpackRow.Active = false 
 
 		BackpackList.Parent = BackpackRow
 		BackpackList.FillDirection = Enum.FillDirection.Horizontal
 		BackpackList.VerticalAlignment = Enum.VerticalAlignment.Center
 		BackpackList.Padding = UDim.new(0, 4)
-		BackpackList.SortOrder = Enum.SortOrder.LayoutOrder
 
 		IconCenter.Name = "IconCenter"
 		IconCenter.Parent = BackpackRow
@@ -6340,15 +6335,37 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 		BackpackPadding.PaddingLeft = UDim.new(0, 6)
 		BackpackPadding.PaddingRight = UDim.new(0, 6)
 
+		-- [ 独立拖拽逻辑 ]
+		local dragging, dragInput, dragStart, startPos
+		BackpackButton.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				dragging = true
+				dragStart = input.Position
+				startPos = BackpackButton.Position
+				input.Changed:Connect(function()
+					if input.UserInputState == Enum.UserInputState.End then
+						dragging = false
+					end
+				end)
+			end
+		end)
+
+		UserInputService.InputChanged:Connect(function(input)
+			if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+				local delta = input.Position - dragStart
+				BackpackButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+			end
+		end)
+
 		-- 交互逻辑
 		BackpackButton.MouseEnter:Connect(function()
 			Fatality:CreateAnimation(BackpackStroke, 0.2, {Color = Fatality.Colors.Main})
-			Fatality:CreateAnimation(BackpackButton, 0.2, {BackgroundColor3 = Color3.fromRGB(30, 30, 30)})
+			Fatality:CreateAnimation(BackpackButton, 0.2, {BackgroundColor3 = Color3.fromRGB(40, 40, 40)})
 		end)
 
 		BackpackButton.MouseLeave:Connect(function()
-			Fatality:CreateAnimation(BackpackStroke, 0.2, {Color = Color3.fromRGB(50, 50, 50)})
-			Fatality:CreateAnimation(BackpackButton, 0.2, {BackgroundColor3 = Color3.fromRGB(20, 20, 20)})
+			Fatality:CreateAnimation(BackpackStroke, 0.2, {Color = Color3.fromRGB(60, 60, 60)})
+			Fatality:CreateAnimation(BackpackButton, 0.2, {BackgroundColor3 = Color3.fromRGB(25, 25, 25)})
 		end)
 
 		BackpackButton.MouseButton1Click:Connect(function()
@@ -6356,7 +6373,6 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 			ToggleUI(Fatal.Toggle)
 		end)
 	end
-    -- [ 自动创建结束 ]
     	return Fatal;
 end;
 
