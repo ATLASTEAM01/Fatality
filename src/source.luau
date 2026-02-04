@@ -5964,6 +5964,8 @@ local BackpackButton = Instance.new("ImageButton")
 	do
 		InfoButton.Name = Fatality:RandomString()
 		InfoButton.Parent = Bottom
+		InfoButton.Visible = false -- 添加这一行
+InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 		InfoButton.AnchorPoint = Vector2.new(1, 0.5)
 		InfoButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 		InfoButton.BackgroundTransparency = 1.000
@@ -6360,146 +6362,113 @@ local BackpackButton = Instance.new("ImageButton")
 	end;
 
 	function Fatal:GetButton()
-		local backpack = Instance.new("ImageButton")
-		local UICorner = Instance.new("UICorner")
-		local RowLabel = Instance.new("Frame")
-		local UIListLayout = Instance.new("UIListLayout")
-		local StyledTextLabel = Instance.new("TextLabel")
-		local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
-		local UIPadding = Instance.new("UIPadding")
-		local IconHost = Instance.new("Frame")
-		local IntegrationIconFrame = Instance.new("Frame")
-		local UIListLayout_2 = Instance.new("UIListLayout")
-		local IntegrationIcon = Instance.new("ImageLabel")
-		local SelectedHighlighter = Instance.new("Frame")
-		local corner = Instance.new("UICorner")
-		local Highlighter = Instance.new("Frame")
-		local corner_2 = Instance.new("UICorner")
-		local _5 = Instance.new("Frame")
+		local BackpackButton = Instance.new("ImageButton")
+		local BackpackCorner = Instance.new("UICorner")
+		local BackpackStroke = Instance.new("UIStroke")
+		local BackpackRow = Instance.new("Frame")
+		local BackpackList = Instance.new("UIListLayout")
+		local BackpackLabel = Instance.new("TextLabel")
+		local BackpackPadding = Instance.new("UIPadding")
+		local BackpackIconHost = Instance.new("Frame")
+		local IconCenter = Instance.new("Frame")
+		local IconLayout = Instance.new("UIListLayout")
+		local MainIcon = Instance.new("ImageLabel")
 
-		backpack.Name = "FATALITY"..Fatality:RandomString();
-		backpack.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		backpack.BackgroundTransparency = 1.000
-		backpack.BorderSizePixel = 0
-		backpack.LayoutOrder = 9
-		backpack.Size = UDim2.new(1, 0, 0, 56)
-		backpack.AutoButtonColor = false
+		-- 主按钮容器
+		BackpackButton.Name = "FatalityToggle"
+		BackpackButton.Parent = Fatalitywin -- 直接挂载到主 ScreenGui
+		BackpackButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- 深色背景
+		BackpackButton.BackgroundTransparency = 0.1
+		BackpackButton.Position = UDim2.new(0, 20, 0, 20) -- 左上角位置
+		BackpackButton.Size = UDim2.new(0, 180, 0, 50)
+		BackpackButton.AutoButtonColor = false
+		BackpackButton.ClipsDescendants = true
+		BackpackButton.ZIndex = 200
 
-		UICorner.CornerRadius = UDim.new(0, 10)
-		UICorner.Parent = backpack
+		-- 拖拽支持 (适配 Fatality 的 Drag 函数)
+		Fatality:AddDragBlacklist(BackpackButton)
+		Fatality:Drag(BackpackButton, BackpackButton, 0.1)
 
-		RowLabel.Name = "RowLabel"
-		RowLabel.Parent = backpack
-		RowLabel.BackgroundTransparency = 1.000
-		RowLabel.BorderSizePixel = 0
-		RowLabel.LayoutOrder = 9
-		RowLabel.Size = UDim2.new(1, 0, 1, 0)
+		-- 圆角
+		BackpackCorner.CornerRadius = UDim.new(0, 8)
+		BackpackCorner.Parent = BackpackButton
 
-		UIListLayout.Parent = RowLabel
-		UIListLayout.FillDirection = Enum.FillDirection.Horizontal
-		UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-		UIListLayout.Padding = UDim.new(0, 8)
+		-- 边框 (增强质感)
+		BackpackStroke.Parent = BackpackButton
+		BackpackStroke.Color = Color3.fromRGB(40, 40, 40)
+		BackpackStroke.Thickness = 1.5
+		BackpackStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-		StyledTextLabel.Name = "StyledTextLabel"
-		StyledTextLabel.Parent = RowLabel
-		StyledTextLabel.BackgroundTransparency = 1.000
-		StyledTextLabel.Size = UDim2.new(1, -52, 1, 0)
-		StyledTextLabel.Font = Enum.Font.BuilderSansBold
-		StyledTextLabel.Text = Window.Name
-		StyledTextLabel.TextColor3 = Color3.fromRGB(247, 247, 248)
-		StyledTextLabel.TextScaled = true
-		StyledTextLabel.TextSize = 20.000
-		StyledTextLabel.TextWrapped = true
-		StyledTextLabel.TextXAlignment = Enum.TextXAlignment.Left
+		-- 布局容器
+		BackpackRow.Name = "RowLabel"
+		BackpackRow.Parent = BackpackButton
+		BackpackRow.BackgroundTransparency = 1.000
+		BackpackRow.Size = UDim2.new(1, 0, 1, 0)
 
-		UITextSizeConstraint.Parent = StyledTextLabel
-		UITextSizeConstraint.MaxTextSize = 20
-		UITextSizeConstraint.MinTextSize = 15
+		BackpackList.Parent = BackpackRow
+		BackpackList.FillDirection = Enum.FillDirection.Horizontal
+		BackpackList.VerticalAlignment = Enum.VerticalAlignment.Center
+		BackpackList.Padding = UDim.new(0, 8)
+		BackpackList.SortOrder = Enum.SortOrder.LayoutOrder
 
-		UIPadding.Parent = RowLabel
-		UIPadding.PaddingLeft = UDim.new(0, 8)
-		UIPadding.PaddingRight = UDim.new(0, 8)
+		-- 图标容器 (左侧)
+		BackpackIconHost.Name = "IconHost"
+		BackpackIconHost.Parent = BackpackRow
+		BackpackIconHost.BackgroundTransparency = 1.000
+		BackpackIconHost.Size = UDim2.new(0, 40, 0, 40)
+		BackpackIconHost.LayoutOrder = 1
 
-		IconHost.Name = "IconHost"
-		IconHost.Parent = RowLabel
-		IconHost.BackgroundTransparency = 1.000
-		IconHost.BorderSizePixel = 0
-		IconHost.LayoutOrder = 9
-		IconHost.Size = UDim2.new(0, 44, 0, 44)
-		IconHost.ZIndex = 9
+		IconCenter.Name = "IconCenter"
+		IconCenter.Parent = BackpackIconHost
+		IconCenter.BackgroundTransparency = 1.000
+		IconCenter.Size = UDim2.new(1, 0, 1, 0)
 
-		IntegrationIconFrame.Name = "IntegrationIconFrame"
-		IntegrationIconFrame.Parent = IconHost
-		IntegrationIconFrame.BackgroundTransparency = 1.000
-		IntegrationIconFrame.BorderSizePixel = 0
-		IntegrationIconFrame.Size = UDim2.new(1, 0, 1, 0)
+		IconLayout.Parent = IconCenter
+		IconLayout.FillDirection = Enum.FillDirection.Horizontal
+		IconLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		IconLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 
-		UIListLayout_2.Parent = IntegrationIconFrame
-		UIListLayout_2.FillDirection = Enum.FillDirection.Horizontal
-		UIListLayout_2.HorizontalAlignment = Enum.HorizontalAlignment.Center
-		UIListLayout_2.VerticalAlignment = Enum.VerticalAlignment.Center
+		MainIcon.Name = "MainIcon"
+		MainIcon.Parent = IconCenter
+		MainIcon.BackgroundTransparency = 1.000
+		MainIcon.Size = UDim2.new(0, 24, 0, 24)
+		MainIcon.Image = "rbxassetid://10734950309" -- 设置图标 (Settings icon)
+		MainIcon.ImageColor3 = Fatality.Colors.Main -- 使用 Fatality 主题色
 
-		IntegrationIcon.Name = "IntegrationIcon"
-		IntegrationIcon.Parent = IntegrationIconFrame
-		IntegrationIcon.BackgroundTransparency = 1.000
-		IntegrationIcon.Size = UDim2.new(0, 36, 0, 36)
-		IntegrationIcon.Image = "http://www.roblox.com/asset/?id=11290237405"
-		IntegrationIcon.ImageColor3 = Color3.fromRGB(247, 247, 248)
+		-- 标题文本 (右侧)
+		BackpackLabel.Name = "Title"
+		BackpackLabel.Parent = BackpackRow
+		BackpackLabel.BackgroundTransparency = 1.000
+		BackpackLabel.Size = UDim2.new(1, -50, 1, 0)
+		BackpackLabel.FontFace = Fatality.FontSemiBold
+		BackpackLabel.Text = Window.Name or "FATALITY"
+		BackpackLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
+		BackpackLabel.TextSize = 16.000
+		BackpackLabel.TextXAlignment = Enum.TextXAlignment.Left
+		BackpackLabel.LayoutOrder = 2
 
-		SelectedHighlighter.Name = "SelectedHighlighter"
-		SelectedHighlighter.Parent = IconHost
-		SelectedHighlighter.AnchorPoint = Vector2.new(0.5, 0.5)
-		SelectedHighlighter.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		SelectedHighlighter.BackgroundTransparency = 0.850
-		SelectedHighlighter.BorderSizePixel = 0
-		SelectedHighlighter.Position = UDim2.new(0.5, 0, 0.5, 0)
-		SelectedHighlighter.Size = UDim2.new(0, 36, 0, 36)
-		SelectedHighlighter.Visible = false
+		BackpackPadding.Parent = BackpackRow
+		BackpackPadding.PaddingLeft = UDim.new(0, 8)
+		BackpackPadding.PaddingRight = UDim.new(0, 8)
 
-		corner.CornerRadius = UDim.new(1, 0)
-		corner.Name = "corner"
-		corner.Parent = SelectedHighlighter
-
-		Highlighter.Name = "Highlighter"
-		Highlighter.Parent = IconHost
-		Highlighter.AnchorPoint = Vector2.new(0.5, 0.5)
-		Highlighter.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		Highlighter.BackgroundTransparency = 0.850
-		Highlighter.BorderSizePixel = 0
-		Highlighter.Position = UDim2.new(0.5, 0, 0.5, 0)
-		Highlighter.Size = UDim2.new(0, 36, 0, 36)
-		Highlighter.Visible = false
-
-		corner_2.CornerRadius = UDim.new(1, 0)
-		corner_2.Name = "corner"
-		corner_2.Parent = Highlighter
-
-		_5.Name = "5"
-		_5.Parent = IconHost
-		_5.BackgroundTransparency = 1.000
-		_5.Size = UDim2.new(1, 0, 1, 0)
-		_5.ZIndex = 2
-
-		backpack.MouseButton1Click:Connect(function()
-			Fatal.Toggle = not Fatal.Toggle;
-
-			ToggleUI(Fatal.Toggle);
-		end);
-
-		backpack.MouseEnter:Connect(function()
-			Fatality:CreateAnimation(backpack,0.3,nil,{
-				BackgroundColor3 = Fatality.Colors.Main,
-				BackgroundTransparency = 0.85
-			})
+		-- 交互逻辑 (悬停动画)
+		BackpackButton.MouseEnter:Connect(function()
+			Fatality:CreateAnimation(BackpackStroke, 0.3, {Color = Fatality.Colors.Main})
+			Fatality:CreateAnimation(BackpackButton, 0.3, {BackgroundColor3 = Color3.fromRGB(25, 25, 25)})
 		end)
 
-		backpack.MouseLeave:Connect(function()
-			Fatality:CreateAnimation(backpack,0.3,nil,{
-				BackgroundTransparency = 1
-			})
+		BackpackButton.MouseLeave:Connect(function()
+			Fatality:CreateAnimation(BackpackStroke, 0.3, {Color = Color3.fromRGB(40, 40, 40)})
+			Fatality:CreateAnimation(BackpackButton, 0.3, {BackgroundColor3 = Color3.fromRGB(15, 15, 15)})
 		end)
 
-		return backpack;
+		-- 点击切换 UI
+		BackpackButton.MouseButton1Click:Connect(function()
+			Fatal.Toggle = not Fatal.Toggle
+			ToggleUI(Fatal.Toggle)
+		end)
+
+		return BackpackButton
 	end;
 
 	function Fatal:SetVisible(b)
