@@ -4148,7 +4148,8 @@ end;
 function Fatality.new(Window: Window)
 	Window = Window or {};
 	Window.Name = Window.Name or "FATALITY";
-	Window.Scale = Window.Scale or UDim2.new(0, 750, 0, 500);
+	-- [修复] 改为左右轴80%，上下轴80% (Scale模式适配不同分辨率)
+	Window.Scale = Window.Scale or UDim2.new(0.8, 0, 0.8, 0); 
 	Window.Keybind = Window.Keybind or "Insert";
 	Window.Expire = Window.Expire or "never";
 
@@ -4199,9 +4200,11 @@ function Fatality.new(Window: Window)
 
 	FatalFrame:GetPropertyChangedSignal("BackgroundTransparency"):Connect(function()
 		if FatalFrame.BackgroundTransparency >= 0.99 then
-			Fatalitywin.Enabled = false;
+			-- [修复] 不要禁用整个ScreenGui(Fatalitywin)，否则控制按钮也会消失
+			-- 改为只隐藏主框架
+			FatalFrame.Visible = false; 
 		else
-			Fatalitywin.Enabled = true;
+			FatalFrame.Visible = true;
 		end;
 	end);
 
@@ -4630,63 +4633,55 @@ function Fatality.new(Window: Window)
 	-- 获取拖拽控制器
 	local dragController = Fatality:Drag(FatalFrame, FatalFrame, 0.1)
 
-	-- [[ 新增的UI控件 ]] --
+-- [[ 新增的UI控件 (已修复样式与逻辑) ]] --
 	local ControlButtonsFrame = Instance.new("Frame")
 	ControlButtonsFrame.Name = "ControlButtons"
 	ControlButtonsFrame.Parent = Fatalitywin
 	ControlButtonsFrame.BackgroundTransparency = 1
-	ControlButtonsFrame.Position = UDim2.new(0, 20, 0, 20) -- 放置在左上角
-	ControlButtonsFrame.Size = UDim2.new(0, 50, 0, 100)
+	-- [修复] 位置在左侧轴 (0)，上下轴60% (0.6) 的位置
+	ControlButtonsFrame.Position = UDim2.new(0, 20, 0.6, 0) 
+	ControlButtonsFrame.Size = UDim2.new(0, 100, 0, 80) -- 容器大小
 	ControlButtonsFrame.ZIndex = 1000
 
 	local controlsLayout = Instance.new("UIListLayout")
 	controlsLayout.Parent = ControlButtonsFrame
 	controlsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	controlsLayout.Padding = UDim.new(0, 5)
+	controlsLayout.Padding = UDim.new(0, 10) -- 按钮间距
 
-	-- 创建展开/关闭按钮 (毛玻璃效果)
-	local ToggleButton = Instance.new("TextButton")
-	ToggleButton.Name = "ToggleButton"
-	ToggleButton.Parent = ControlButtonsFrame
-	ToggleButton.Size = UDim2.new(0, 50, 0, 45)
-	ToggleButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-	ToggleButton.BackgroundTransparency = 0.7 -- 毛玻璃透明度
-	ToggleButton.Text = "Menu"
-	ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-	ToggleButton.Font = Enum.Font.SourceSansBold
-	ToggleButton.TextSize = 14
+	-- [新增] 让控制按钮区域可拖拽
+	Fatality:AddDragBlacklist(ControlButtonsFrame) -- 防止与内部点击冲突
+	Fatality:Drag(ControlButtonsFrame, ControlButtonsFrame, 0)
 
-	local toggleStroke = Instance.new("UIStroke")
-	toggleStroke.Parent = ToggleButton
-	toggleStroke.Color = Color3.fromRGB(255, 255, 255)
-	toggleStroke.Thickness = 1
-	toggleStroke.Transparency = 0.5
+	-- 通用按钮样式函数
+	local function createStyledButton(name, text)
+		local btn = Instance.new("TextButton")
+		btn.Name = name
+		btn.Parent = ControlButtonsFrame
+		btn.Size = UDim2.new(0, 80, 0, 30) -- [修复] 长方形尺寸
+		btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50) -- [修复] 灰色背景
+		btn.BackgroundTransparency = 0
+		btn.Text = text
+		btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+		btn.Font = Enum.Font.GothamBold
+		btn.TextSize = 12
+		
+		-- [修复] 边框 (UIStroke)
+		local stroke = Instance.new("UIStroke")
+		stroke.Parent = btn
+		stroke.Color = Color3.fromRGB(0, 0, 0) -- 黑色边框
+		stroke.Thickness = 1.5
+		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-	local toggleCorner = Instance.new("UICorner")
-	toggleCorner.CornerRadius = UDim.new(0, 8)
-	toggleCorner.Parent = ToggleButton
+		-- [修复] 略微圆角或直角 (这里设为2像素微圆角)
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 2) 
+		corner.Parent = btn
+		
+		return btn
+	end
 
-	-- 创建锁定按钮
-	local LockButton = Instance.new("TextButton")
-	LockButton.Name = "LockButton"
-	LockButton.Parent = ControlButtonsFrame
-	LockButton.Size = UDim2.new(0, 50, 0, 45)
-	LockButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-	LockButton.BackgroundTransparency = 0.7 -- 毛玻璃透明度
-	LockButton.Text = "Lock"
-	LockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-	LockButton.Font = Enum.Font.SourceSansBold
-	LockButton.TextSize = 14
-
-	local lockStroke = Instance.new("UIStroke")
-	lockStroke.Parent = LockButton
-	lockStroke.Color = Color3.fromRGB(255, 255, 255)
-	lockStroke.Thickness = 1
-	lockStroke.Transparency = 0.5
-
-	local lockCorner = Instance.new("UICorner")
-	lockCorner.CornerRadius = UDim.new(0, 8)
-	lockCorner.Parent = LockButton
+	local ToggleButton = createStyledButton("ToggleButton", "Menu")
+	local LockButton = createStyledButton("LockButton", "Lock UI")
 
 	-- 按钮逻辑
 	ToggleButton.MouseButton1Click:Connect(function()
@@ -4699,24 +4694,24 @@ function Fatality.new(Window: Window)
 		isLocked = not isLocked
 		dragController:SetLocked(isLocked)
 		if isLocked then
-			LockButton.Text = "Unlock"
-			LockButton.BackgroundColor3 = Fatality.Colors.Main -- 锁定状态用主题色高亮
-			LockButton.BackgroundTransparency = 0.5
+			LockButton.Text = "Unlock UI"
+			LockButton.TextColor3 = Fatality.Colors.Main -- 锁定状态文字变色
+			LockButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 		else
-			LockButton.Text = "Lock"
-			LockButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80) -- 恢复默认颜色
-			LockButton.BackgroundTransparency = 0.7
+			LockButton.Text = "Lock UI"
+			LockButton.TextColor3 = Color3.fromRGB(220, 220, 220)
+			LockButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 		end
 	end)
 	-- [[ 新增UI控件结束 ]] --
-
+	
 	UserInputService.InputBegan:Connect(function(input,istyping)
 		if not istyping then
-			-- 移除键盘快捷键，仅使用按钮控制
-			-- if input.KeyCode == Window.Keybind or input.KeyCode.Name == Window.Keybind then
-			-- 	Fatal.Toggle = not Fatal.Toggle;
-			-- 	ToggleUI(Fatal.Toggle);
-			-- end;
+			-- [修复] 恢复键盘快捷键逻辑
+			if input.KeyCode == Window.Keybind or input.KeyCode.Name == Window.Keybind then
+				Fatal.Toggle = not Fatal.Toggle;
+				ToggleUI(Fatal.Toggle);
+			end;
 		end
 	end)
 
