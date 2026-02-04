@@ -6258,7 +6258,8 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 		end)
 	end;
 
-	function Fatal:GetButton()
+-- [ 自动创建控制按钮 - 放在 return Fatal 之前 ]
+	do
 		local BackpackButton = Instance.new("ImageButton")
 		local BackpackCorner = Instance.new("UICorner")
 		local BackpackStroke = Instance.new("UIStroke")
@@ -6269,82 +6270,77 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 		local IconCenter = Instance.new("Frame")
 		local MainIcon = Instance.new("ImageLabel")
 
-		-- 1. 主按钮容器
-		BackpackButton.Name = "FatalityToggle"
-		BackpackButton.Parent = Fatalitywin
-		BackpackButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20) -- 纯色背景，更清晰
-		BackpackButton.BackgroundTransparency = 0 -- [修复] 去除透明蒙层感
+		-- 设置主容器
+		BackpackButton.Name = "FatalityToggleAuto"
+		BackpackButton.Parent = Fatalitywin -- 确保显示在屏幕上
+		BackpackButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+		BackpackButton.BackgroundTransparency = 0 -- 解决蒙层阴影问题
+		BackpackButton.BorderSizePixel = 0
 		BackpackButton.Position = UDim2.new(0, 20, 0, 20)
-		
-		-- [修复] 尺寸缩小 60% (原 180x50 -> 现 80x32)
-		BackpackButton.Size = UDim2.new(0, 80, 0, 32) 
-		
+		BackpackButton.Size = UDim2.new(0, 80, 0, 32) -- 缩小后的尺寸
 		BackpackButton.AutoButtonColor = false
 		BackpackButton.ClipsDescendants = true
 		BackpackButton.ZIndex = 200
-		BackpackButton.Image = "" -- 确保没有默认图片遮挡
 
-		-- [修复] 拖拽优化：速度设为0(无延迟)，确保跟手
-		Fatality:AddDragBlacklist(BackpackButton)
-		Fatality:Drag(BackpackButton, BackpackButton, 0) 
-
-		-- 圆角
-		BackpackCorner.CornerRadius = UDim.new(0, 2) -- 圆角稍微改小一点适配小尺寸
+		-- 圆角设置
+		BackpackCorner.CornerRadius = UDim.new(0, 6) -- 在这里修改圆角数值
 		BackpackCorner.Parent = BackpackButton
 
-		-- 边框
+		-- 边框设置
 		BackpackStroke.Parent = BackpackButton
 		BackpackStroke.Color = Color3.fromRGB(50, 50, 50)
 		BackpackStroke.Thickness = 1.2
 		BackpackStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-		-- 布局容器
+		-- 拖拽优化 (0延迟跟手)
+		Fatality:AddDragBlacklist(BackpackButton)
+		Fatality:Drag(BackpackButton, BackpackButton, 0) 
+
+		-- 内部布局 (禁止 Active 以防干扰拖拽)
 		BackpackRow.Name = "RowLabel"
 		BackpackRow.Parent = BackpackButton
-		BackpackRow.BackgroundTransparency = 1.000
+		BackpackRow.BackgroundTransparency = 1
 		BackpackRow.Size = UDim2.new(1, 0, 1, 0)
-		BackpackRow.Active = false -- [修复] 禁止子元素抢夺输入，解决拖拽不灵敏
+		BackpackRow.Active = false
 
 		BackpackList.Parent = BackpackRow
 		BackpackList.FillDirection = Enum.FillDirection.Horizontal
 		BackpackList.VerticalAlignment = Enum.VerticalAlignment.Center
-		BackpackList.Padding = UDim.new(0, 4) -- 减小间距
+		BackpackList.Padding = UDim.new(0, 4)
 		BackpackList.SortOrder = Enum.SortOrder.LayoutOrder
 
-		-- 图标容器
 		IconCenter.Name = "IconCenter"
 		IconCenter.Parent = BackpackRow
-		IconCenter.BackgroundTransparency = 1.000
-		IconCenter.Size = UDim2.new(0, 20, 0, 20) -- 缩小图标容器
-		IconCenter.Active = false -- [修复] 禁止交互
+		IconCenter.BackgroundTransparency = 1
+		IconCenter.Size = UDim2.new(0, 20, 0, 20)
+		IconCenter.Active = false
 
 		MainIcon.Name = "MainIcon"
 		MainIcon.Parent = IconCenter
 		MainIcon.AnchorPoint = Vector2.new(0.5, 0.5)
 		MainIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-		MainIcon.BackgroundTransparency = 1.000
-		MainIcon.Size = UDim2.new(0, 14, 0, 14) -- 缩小图标
+		MainIcon.BackgroundTransparency = 1
+		MainIcon.Size = UDim2.new(0, 14, 0, 14)
 		MainIcon.Image = "rbxassetid://10734950309"
 		MainIcon.ImageColor3 = Fatality.Colors.Main
-		MainIcon.Active = false -- [修复] 禁止交互
+		MainIcon.Active = false
 
-		-- 标题文本
 		BackpackLabel.Name = "Title"
 		BackpackLabel.Parent = BackpackRow
-		BackpackLabel.BackgroundTransparency = 1.000
+		BackpackLabel.BackgroundTransparency = 1
 		BackpackLabel.Size = UDim2.new(1, -28, 1, 0)
 		BackpackLabel.FontFace = Fatality.FontSemiBold
-		BackpackLabel.Text = "MENU" -- 缩短文本以适应小按钮，或者用 Window.Name
+		BackpackLabel.Text = "MENU"
 		BackpackLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
-		BackpackLabel.TextSize = 12.000 -- 缩小字号
+		BackpackLabel.TextSize = 12
 		BackpackLabel.TextXAlignment = Enum.TextXAlignment.Left
-		BackpackLabel.Active = false -- [修复] 禁止交互
+		BackpackLabel.Active = false
 
 		BackpackPadding.Parent = BackpackRow
 		BackpackPadding.PaddingLeft = UDim.new(0, 6)
 		BackpackPadding.PaddingRight = UDim.new(0, 6)
 
-		-- 交互逻辑 (悬停变亮)
+		-- 交互逻辑
 		BackpackButton.MouseEnter:Connect(function()
 			Fatality:CreateAnimation(BackpackStroke, 0.2, {Color = Fatality.Colors.Main})
 			Fatality:CreateAnimation(BackpackButton, 0.2, {BackgroundColor3 = Color3.fromRGB(30, 30, 30)})
@@ -6355,23 +6351,13 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 			Fatality:CreateAnimation(BackpackButton, 0.2, {BackgroundColor3 = Color3.fromRGB(20, 20, 20)})
 		end)
 
-		-- 点击切换
 		BackpackButton.MouseButton1Click:Connect(function()
 			Fatal.Toggle = not Fatal.Toggle
 			ToggleUI(Fatal.Toggle)
 		end)
-
-		return BackpackButton
-	end;
-
-	function Fatal:SetVisible(b)
-		Fatal.Toggle = b;
-		ToggleUI(b);
-	end;
-
-	ToggleUI(true);
-
-	return Fatal;
+	end
+    -- [ 自动创建结束 ]
+    	return Fatal;
 end;
 
 function Fatality:Loader(Config: Loader)
