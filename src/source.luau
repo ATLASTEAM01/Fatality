@@ -1,12 +1,4 @@
---[[
-    		Fatality-Dark Interface
 
-    Author: 4lpaca
-    License: MIT
-    Github: https://github.com/4lpaca-pin/Fatality
---]]
-
--- Export Types --
 export type Window = {
 	Name: string,
 	Keybind: string | Enum.KeyCode,
@@ -136,7 +128,6 @@ export type Notifier = {
 	Notify: (self, Config: Notify) -> nil
 }
 
--- Exploit Environments --
 cloneref = cloneref or function(i) return i; end;
 clonefunction = clonefunction or function(...) return ...; end;
 hookfunction = hookfunction or function(a,b) return a; end;
@@ -264,7 +255,6 @@ if game:GetService('RunService'):IsStudio() then
 	end;
 end;
 
--- Services --
 local TextService = cloneref(game:GetService('TextService'));
 local TweenService = cloneref(game:GetService('TweenService'));
 local RunService = cloneref(game:GetService('RunService'));
@@ -279,7 +269,6 @@ end,function()
 	return Client.PlayerGui;
 end);
 
--- Fatality --
 local Fatality = {};
 
 Fatality.Ascii = "qwertyuiopasdfghjklzxcvbnmQWRTYUIOPASDFGHJKLZXCVBNM";
@@ -4148,7 +4137,6 @@ end;
 function Fatality.new(Window: Window)
 	Window = Window or {};
 	Window.Name = Window.Name or "FATALITY";
-	-- [修复] 改为左右轴80%，上下轴80% (Scale模式适配不同分辨率)
 	Window.Scale = Window.Scale or UDim2.new(0.8, 0, 0.8, 0); 
 	Window.Keybind = Window.Keybind or "Insert";
 	Window.Expire = Window.Expire or "never";
@@ -4200,8 +4188,7 @@ function Fatality.new(Window: Window)
 
 	FatalFrame:GetPropertyChangedSignal("BackgroundTransparency"):Connect(function()
 		if FatalFrame.BackgroundTransparency >= 0.99 then
-			-- [修复] 不要禁用整个ScreenGui(Fatalitywin)，否则控制按钮也会消失
-			-- 改为只隐藏主框架
+			
 			FatalFrame.Visible = false; 
 		else
 			FatalFrame.Visible = true;
@@ -4630,7 +4617,7 @@ function Fatality.new(Window: Window)
 	UICorner_6.CornerRadius = UDim.new(0, 5)
 	UICorner_6.Parent = HeaderLineShadow_2
 
-	-- 获取拖拽控制器
+	
 	local dragController = Fatality:Drag(FatalFrame, FatalFrame, 0.1)
 
 
@@ -4641,7 +4628,7 @@ function Fatality.new(Window: Window)
 	ResizeHandle.Position = UDim2.new(1, -2, 1, -2)
 	ResizeHandle.Size = UDim2.new(0, 16, 0, 16)
 	ResizeHandle.BackgroundTransparency = 1
-	ResizeHandle.Image = "rbxassetid://10734942072" -- Lucide 'scaling' icon or diagonal arrow
+	ResizeHandle.Image = "rbxassetid://10734942072" 
 	ResizeHandle.ImageColor3 = Color3.fromRGB(150, 150, 150)
 	ResizeHandle.ImageTransparency = 0.5
 	ResizeHandle.ZIndex = 20
@@ -4656,7 +4643,7 @@ function Fatality.new(Window: Window)
 			resizeStartPos = input.Position
 			initialSize = FatalFrame.AbsoluteSize
 			
-			-- 视觉反馈
+			
 			Fatality:CreateAnimation(ResizeHandle, 0.2, {ImageColor3 = Fatality.Colors.Main, ImageTransparency = 0})
 		end
 	end)
@@ -4664,8 +4651,8 @@ function Fatality.new(Window: Window)
 	UserInputService.InputChanged:Connect(function(input)
 		if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 			local delta = input.Position - resizeStartPos
-			local newX = math.max(400, initialSize.X + delta.X) -- 最小宽度限制
-			local newY = math.max(300, initialSize.Y + delta.Y) -- 最小高度限制
+			local newX = math.max(400, initialSize.X + delta.X) 
+			local newY = math.max(300, initialSize.Y + delta.Y) 
 			
 			FatalFrame.Size = UDim2.new(0, newX, 0, newY)
 		end
@@ -4675,7 +4662,7 @@ function Fatality.new(Window: Window)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			if isResizing then
 				isResizing = false
-				-- 恢复视觉
+				
 				Fatality:CreateAnimation(ResizeHandle, 0.2, {ImageColor3 = Color3.fromRGB(150, 150, 150), ImageTransparency = 0.5})
 			end
 		end
@@ -4686,7 +4673,6 @@ function Fatality.new(Window: Window)
 	
 	UserInputService.InputBegan:Connect(function(input,istyping)
 		if not istyping then
-			-- [修复] 恢复键盘快捷键逻辑
 			if input.KeyCode == Window.Keybind or input.KeyCode.Name == Window.Keybind then
 				Fatal.Toggle = not Fatal.Toggle;
 				ToggleUI(Fatal.Toggle);
@@ -5861,8 +5847,8 @@ function Fatality.new(Window: Window)
 	do
 		InfoButton.Name = Fatality:RandomString()
 		InfoButton.Parent = Bottom
-		InfoButton.Visible = false -- 添加这一行
-InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
+		InfoButton.Visible = false 
+InfoButton.Size = UDim2.new(0, 0, 0, 0)
 		InfoButton.AnchorPoint = Vector2.new(1, 0.5)
 		InfoButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 		InfoButton.BackgroundTransparency = 1.000
@@ -6258,7 +6244,6 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 		end)
 	end;
 
--- [ 自动创建控制按钮 - 独立拖拽优化版 ]
 	do
 		local BackpackButton = Instance.new("ImageButton")
 		local BackpackCorner = Instance.new("UICorner")
@@ -6270,21 +6255,21 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 		local IconCenter = Instance.new("Frame")
 		local MainIcon = Instance.new("ImageLabel")
 
-		-- 设置主容器
+		
 		BackpackButton.Name = "FatalityToggleFix"
 		BackpackButton.Parent = Fatalitywin 
-		BackpackButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25) -- 稍微调亮一点
+		BackpackButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25) 
 		BackpackButton.BackgroundTransparency = 0 
 		BackpackButton.BorderSizePixel = 0
-		-- [修改] 位置向下移动 100 像素 (原 20 -> 120)
+		
 		BackpackButton.Position = UDim2.new(0, 20, 0, 120) 
 		BackpackButton.Size = UDim2.new(0, 80, 0, 32) 
 		BackpackButton.AutoButtonColor = false
 		BackpackButton.ClipsDescendants = true
 		BackpackButton.ZIndex = 200
-		BackpackButton.Active = true -- 必须为 True 才能响应拖拽
+		BackpackButton.Active = true 
 
-		-- 圆角和边框
+		
 		BackpackCorner.CornerRadius = UDim.new(0, 6)
 		BackpackCorner.Parent = BackpackButton
 		BackpackStroke.Parent = BackpackButton
@@ -6292,7 +6277,7 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 		BackpackStroke.Thickness = 1.2
 		BackpackStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-		-- 内部布局 (禁止子元素 Active，确保点击穿透到父级按钮)
+		
 		BackpackRow.Name = "RowLabel"
 		BackpackRow.Parent = BackpackButton
 		BackpackRow.BackgroundTransparency = 1
@@ -6335,8 +6320,7 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 		BackpackPadding.PaddingLeft = UDim.new(0, 6)
 		BackpackPadding.PaddingRight = UDim.new(0, 6)
 
-		-- [ 独立拖拽逻辑 ]
-		local dragging, dragInput, dragStart, startPos
+				local dragging, dragInput, dragStart, startPos
 		BackpackButton.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				dragging = true
@@ -6357,7 +6341,7 @@ InfoButton.Size = UDim2.new(0, 0, 0, 0) -- 或者把大小改为0
 			end
 		end)
 
-		-- 交互逻辑
+		
 		BackpackButton.MouseEnter:Connect(function()
 			Fatality:CreateAnimation(BackpackStroke, 0.2, {Color = Fatality.Colors.Main})
 			Fatality:CreateAnimation(BackpackButton, 0.2, {BackgroundColor3 = Color3.fromRGB(40, 40, 40)})
